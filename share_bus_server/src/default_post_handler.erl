@@ -35,49 +35,56 @@ content_types_accepted(Req, State) ->
 
 from_json(Req, SubHandlers) ->
     PathBin = cowboy_req:path(Req),
-    lager:info("path info:~p",[PathBin]),
+    lager:info("path info:~p", [PathBin]),
     Ret =
-        case lists:keyfind(utils:to_list(PathBin), 1, SubHandlers) of
-            {_Path, SubHandler, NeedAuth} ->
-                do_handle(Req,SubHandler,NeedAuth);
-            _ ->
-                #default_ret{ret=1000}
+        try
+            case lists:keyfind(utils:to_list(PathBin), 1, SubHandlers) of
+                {_Path, SubHandler, NeedAuth} ->
+                    do_handle(Req, SubHandler, NeedAuth);
+                _ ->
+                    #default_tos{ret = 1000}
+            end
+        catch ErrorType:Reason ->
+            lager:error("do_business: ErrorType=~p, Reason=~p, Detail=~p", [ErrorType, Reason, erlang:get_stacktrace()]),
+            #default_tos{ret = 1000}
         end,
-    Req1 = cowboy_req:set_resp_body(Ret, ?ENCODE(Req)),
-    lager:info("response ~p",[Ret]),
+
+    ReturnJson = ?ENCODE(Ret),
+    lager:info("ret:~p", [ReturnJson]),
+    Req1 = cowboy_req:set_resp_body(ReturnJson, Req),
     {true, Req1, []}.
 
-do_handle(Req, SubHandler,false) ->
+do_handle(Req, SubHandler, false) ->
     case do_parse_body(Req) of
         {true, Req1, ProtoTos} ->
+            lager:info("proto:~p", [ProtoTos]),
             SubHandler:handle(Req1, ProtoTos);
-        error ->
-            #default_ret{ret=1001}
+        _R ->
+            #default_tos{ret = 1001}
     end;
-do_handle(Req,SubHandler,true)->
+do_handle(Req, SubHandler, true) ->
     case do_parse_body(Req) of
         {true, Req1, ProtoTos} ->
-            UserID = erlang:element(2,ProtoTos),
-            case do_auth(Req1,UserID) of
+            UserID = erlang:element(2, ProtoTos),
+            case do_auth(Req1, UserID) of
                 true ->
                     SubHandler:handle(Req1, ProtoTos);
                 false ->
-                    #default_ret{ret=1000}
+                    #default_tos{ret = 1000}
             end;
-        error->
-            #default_ret{ret=1001}
+        _R ->
+            #default_tos{ret = 1001}
     end.
 
-do_auth(Req,UserID) ->
+do_auth(Req, UserID) ->
     Cookies = cowboy_req:parse_cookies(Req),
-    case lists:keyfind(<<"uid">>,1,Cookies) of
-        {<<"uid">>,Session} ->
-            case eredis_pools:hget(?REDIS_POOL,utils:user_key(UserID),<<"session">>) of
+    case lists:keyfind(<<"uid">>, 1, Cookies) of
+        {<<"uid">>, Session} ->
+            case eredis_pools:hget(?REDIS_POOL, utils:user_key(UserID), <<"session">>) of
                 Session ->
-                    lager:info("session is :~p",[Session]),
-                    true ;
+                    true;
                 _r ->
-                    lager:info("_r :~p",[_r]),
+                    lager:info("_r :~p", [_r]),
                     false
             end;
         _ ->
@@ -86,11 +93,11 @@ do_auth(Req,UserID) ->
 
 do_parse_body(Req) ->
     {ok, Body, Req1} = cowboy_req:body(Req),
-    case ?DECODE( Body) of
-        {error, _Reason,_} ->
-            lager:error("~p",[_Reason]),
-            {error, Req1, "{\"ret\":404}"};
-        ProtoTos when is_tuple(ProtoTos)->
-            lager:info("proto:~p",[ProtoTos]),
+    case ?DECODE(Body) of
+        {error, _Reason, _} ->
+            lager:error("~p", [_Reason]),
+            {error, Req1};
+        ProtoTos when is_tuple(ProtoTos) ->
+            lager:info("proto:~p", [ProtoTos]),
             {true, Req1, ProtoTos}
     end.

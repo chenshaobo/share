@@ -14,7 +14,7 @@
 -export([init/2]).
 -export([allowed_methods/2,
     is_authorized/2
-    ]).
+]).
 
 -export([to_html/2]).
 -include("proto.hrl").
@@ -37,40 +37,46 @@ allowed_methods(Req, State) ->
 
 to_html(Req, SubHandlers) ->
     PathBin = cowboy_req:path(Req),
-    Ret =
-        case lists:keyfind(utils:to_list(PathBin), 1, SubHandlers) of
-            {_Path, SubHandler, NeedAuth} ->
-                do_handle(Req,SubHandler,NeedAuth);
-            _ ->
-                #default_ret{ret=1000}
-        end,
-    {?ENCODE(Ret),Req,[]}.
+    lager:info("path info:~p",[PathBin]),
+    Ret = try
+              case lists:keyfind(utils:to_list(PathBin), 1, SubHandlers) of
+                  {_Path, SubHandler, NeedAuth} ->
+                      do_handle(Req, SubHandler, NeedAuth);
+                  _E ->
+                      lager:info("get subhandler false:~p",[_E]),
+                      #default_tos{ret = 1000}
+              end
+          catch ErrorType:Reason ->
+              lager:error("do_business: ErrorType=~p, Reason=~p, Detail=~p", [ErrorType, Reason, erlang:get_stacktrace()]),
+              #default_tos{ret = 1000}
+          end,
+    {?ENCODE(Ret), Req, []}.
 
-do_handle(Req,SubHandler,true)->
+do_handle(Req, SubHandler, true) ->
     case do_parse_body(Req) of
         {true, Req1, ProtoTos} ->
-            UserID = erlang:element(2,ProtoTos),
-            case do_auth(Req1,UserID) of
+            UserID = erlang:element(2, ProtoTos),
+            case do_auth(Req1, UserID) of
                 true ->
                     SubHandler:handle(Req1, ProtoTos);
                 false ->
-                    #default_ret{ret=1002}
+                    #default_tos{ret = 1002}
             end;
-        error->
-            #default_ret{ret=1001}
+        error ->
+            #default_tos{ret = 1001}
     end.
 
 
-do_auth(Req,UserID) ->
+do_auth(Req, UserID) ->
     Cookies = cowboy_req:parse_cookies(Req),
-    case lists:keyfind(<<"uid">>,1,Cookies) of
-        {<<"uid">>,Session} ->
-            case eredis_pools:hget(?REDIS_POOL,utils:user_key(UserID),<<"session">>) of
+    case lists:keyfind(<<"uid">>, 1, Cookies) of
+        {<<"uid">>, Session} ->
+            case eredis_pools:hget(?REDIS_POOL, utils:user_key(UserID), <<"session">>) of
                 Session ->
-                    lager:info("session is :~p",[Session]),
-                    true ;
+                    lager:info("session is :~p", [Session]),
+                    true;
                 _r ->
-                    lager:info("_r :~p",[_r]),
+                    lager:info("_r :~p", [_r]),
                     false
             end;
         _ ->
@@ -80,12 +86,12 @@ do_auth(Req,UserID) ->
 do_parse_body(Req) ->
     QS = cowboy_req:parse_qs(Req),
     Body = ?ENCODE(QS),
-    lager:info("body:~p",[Body]),
+    lager:info("body:~p", [Body]),
     case ?DECODE(Body) of
-        {error, _Reason,_} ->
-            lager:error("~p",[_Reason]),
+        {error, _Reason, _} ->
+            lager:error("~p", [_Reason]),
             error;
-        ProtoTos when is_tuple(ProtoTos)->
-            lager:info("proto:~p",[ProtoTos]),
+        ProtoTos when is_tuple(ProtoTos) ->
+            lager:info("proto:~p", [ProtoTos]),
             {true, Req, ProtoTos}
     end.

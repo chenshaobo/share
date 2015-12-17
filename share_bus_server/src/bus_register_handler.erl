@@ -28,5 +28,5 @@ handle(_Req,Proto)->
             lager:info("r=~p",[R]),
             #register_toc{ret=1000,user_id=utils:to_int(UserID),session= Session};
         _ ->
-            #register_toc{ret=1000,user_id = "already exits"}
+            #register_toc{ret=1004}
     end.

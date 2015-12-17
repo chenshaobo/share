@@ -21,6 +21,8 @@
 -export([timestamp/0]).
 -export([post_key/1]).
 -export([sub_key/1]).
+-export([following_key/1]).
+-export([followers_key/1]).
 
 
 incr_userid()->
@@ -44,6 +46,11 @@ to_int(undefined)->
 to_int(_)->
     elang:throw(error_type).
 
+following_key(UserID)->
+    "following:" ++ utils:to_list(UserID).
+
+followers_key(UserID)->
+    "followers:" ++ utils:to_list(UserID).
 
 user_key(UserID)->
     "user_id:" ++ utils:to_list(UserID).

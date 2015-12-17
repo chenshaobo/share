@@ -22,10 +22,17 @@ handle(_Req, #post_tos{user_id = UserID, text = Text, pics = Pics}) ->
     PostKey = utils:post_key(PostID),
     _SubKey = utils:sub_key(UserID),
 
+    FollowersKey = utils:followers_key(UserID),
+    Followers = eredis_pools:zrange(?REDIS_POOL,FollowersKey,0,-1),
+    PostToFollowers=
+    [begin
+         FollowerPostKey = utils:user_post_key(Follower),
+         ?LPUSH(FollowerPostKey,[PostID])
+     end || Follower <-Followers],
     Json = jsonx:encode({struct, [{user_id, UserID}, {timestamp, TimeStamp}, {post_id, PostID}, {text, Text}, {pics, Pics}]}),
     Commands = [
-        ?HMSET(PostKey, ["post_id", PostID, "user_id", UserID, "timestamp", TimeStamp, "json", Json]),
-        ?LPUSH(UserPostKey, [PostID])
+        ?HMSET(PostKey, ["post_id", PostID, "user_id", UserID, "timestamp", TimeStamp, "json", Json]) |
+         [ ?LPUSH(UserPostKey, [PostID]) | PostToFollowers]
     ],
     R = eredis_pools:qp(?REDIS_POOL, Commands),
     lager:info("~p", [R]),

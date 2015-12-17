@@ -4,9 +4,9 @@
 %%% @doc
 %%%
 %%% @end
-%%% Created : 18. 十二月 2015 16:46
+%%% Created : 21. 十二月 2015 10:20
 %%%-------------------------------------------------------------------
--module(bus_get_post_handler).
+-module(bus_get_following_handler).
 -author("chenshb@mpreader.com").
 
 
@@ -16,8 +16,7 @@
 -include("db.hrl").
 
 handle(_Req, #get_data_tos{user_id = UserID,start = Start,end_index = End}) ->
-    UserPostKey = utils:user_post_key(UserID),
-    Posts= eredis_pools:lrange(?REDIS_POOL,UserPostKey,Start,End),
-    Commands = [?HMGET(utils:post_key(PostID),["json"]) || PostID <-Posts],
-    PostJsons=eredis_pools:qp(?REDIS_POOL,Commands),
-    #get_data_toc{data =  [ Json ||{ok,[Json]} <-PostJsons]}.
+    FollowingKey = utils:following_key(UserID),
+    Followings= eredis_pools:zrange(?REDIS_POOL,FollowingKey,Start,End),
+    lager:info("key:~p,data:~p",[FollowingKey,Followings]),
+    #get_data_toc{data =  [ utils:to_int(Following) ||Following <-Followings]}.

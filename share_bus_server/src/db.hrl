@@ -46,3 +46,8 @@
 
 -define(LRANGE(Key,Start,End),["LRANGE",Key,Start,End]).
 
+-define(ZADD(OrderSet,Value ,Key), ["ZADD",OrderSet,Value,Key]).
+
+-define(ZREM(OrderSet,Keys),["ZREM"|[OrderSet|Keys]]).
+
+

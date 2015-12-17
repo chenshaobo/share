@@ -41,11 +41,15 @@ myrouterlist() ->
             {"/p/[...]" , default_post_handler,[
                 {"/p/register",bus_register_handler,false},
                 {"/p/login",   bus_login_handler,false},
-                {"/p/post",    bus_post_handler,true}
+                {"/p/post",    bus_post_handler,true},
+                {"/p/follow",  bus_follow_hander,true},
+                {"/p/cancle/follow", bus_cancel_follow_handler,true}
             ]},
 
             {"/g/[...]", default_get_handler,[
-                {"/g/posts", bus_get_post_handler,true}
+                {"/g/posts", bus_get_post_handler,true},
+                {"/g/followers",bus_get_followers_handler,true},%%获取粉丝
+                {"/g/following",bus_get_following_handler,true} %%获取关注的
             ]}
         ]}
     ].

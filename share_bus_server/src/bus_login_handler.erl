@@ -17,18 +17,14 @@
 
 handle(_Req, #login_tos{account = Account, password = Password}) ->
     PasswordMD5 = utils:to_md5(Password),
-    lager:info("~p",[PasswordMD5]),
         case eredis_pools:hget(?REDIS_POOL, ?ACCOUNT, Account) of
             undefined ->
                 #login_toc{ret = 1002};
             UserID ->
-                lager:info("user id :~p",[UserID]),
                 case eredis_pools:hmget(?REDIS_POOL,UserID,["password","session"])of
                     [PasswordMD5,Session] ->
-                        lager:info("~p",[Password]),
                         #login_toc{ret = 1003,user_id = UserID,session =Session };
                     _R ->
-                        lager:info("~p",[_R]),
                         #login_toc{ret = 1002}
                 end
         end.

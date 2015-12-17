@@ -15,17 +15,19 @@
 -include("proto.hrl").
 -include("db.hrl").
 
-handle(_Req, #post_tos{user_id = UserID,text = Text,pics=Pics}) ->
+handle(_Req, #post_tos{user_id = UserID, text = Text, pics = Pics}) ->
     UserPostKey = utils:user_post_key(UserID),
-    TimeStamp=utils:timestamp(),
-    PostID = eredis_pools:incr(?REDIS_POOL,?NEXT_POST_ID),
-    PostKey = utils:post_id(PostID),
+    TimeStamp = utils:timestamp(),
+    PostID = eredis_pools:incr(?REDIS_POOL, ?NEXT_POST_ID),
+    PostKey = utils:post_key(PostID),
+    _SubKey = utils:sub_key(UserID),
 
-    Json=jsonx:encode({struct,[{user_id,UserID},{timestamp,TimeStamp},{post_id,PostID},{text,Text},{pics,Pics}]}),
-    Commands= [ ?HMSET(PostKey,["post_id",PostID,"user_id",UserID,"timestamp",TimeStamp,"json",Json]),
-                ?LPUSH(UserPostKey,[PostID])
-              ],
-    R=eredis_pools:qp(?REDIS_POOL,Commands),
-    lager:info("~p",[R]),
+    Json = jsonx:encode({struct, [{user_id, UserID}, {timestamp, TimeStamp}, {post_id, PostID}, {text, Text}, {pics, Pics}]}),
+    Commands = [
+        ?HMSET(PostKey, ["post_id", PostID, "user_id", UserID, "timestamp", TimeStamp, "json", Json]),
+        ?LPUSH(UserPostKey, [PostID])
+    ],
+    R = eredis_pools:qp(?REDIS_POOL, Commands),
+    lager:info("~p", [R]),
     #post_toc{post_id = utils:to_int(PostID)}.
 

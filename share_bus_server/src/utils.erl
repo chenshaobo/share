@@ -19,7 +19,8 @@
 -export([to_md5/1]).
 -export([user_post_key/1]).
 -export([timestamp/0]).
--export([post_id/1]).
+-export([post_key/1]).
+-export([sub_key/1]).
 
 
 incr_userid()->
@@ -50,8 +51,11 @@ user_key(UserID)->
 user_post_key(UserID)->
     "user_posts:" ++ utils:to_list(UserID).
 
-post_id(PostID)->
+post_key(PostID)->
     "post:" ++utils:to_list(PostID).
+
+sub_key(UserID)->
+    "sub:" ++ utils:to_list(UserID).
 
 timestamp()->
     {A,B,_}=os:timestamp(),

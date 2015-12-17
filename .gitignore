@@ -2,3 +2,5 @@
 .rebar/
 **/ebin/*
 **/_rel/*
+**/.idea/*
+**/.erlang.mk/*

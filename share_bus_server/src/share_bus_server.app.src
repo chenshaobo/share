@@ -1,0 +1,17 @@
+{application, share_bus_server, [
+    {description, ""},
+    {vsn, "rolling"},
+    {modules, ['share_bus_server_app', 'share_bus_server_sup']},
+    {registered, [share_bus_server_sup]},
+    {applications, [
+        kernel,
+        stdlib,
+        cowboy,
+        lager,
+        sync,
+        eredis,
+        poolboy,
+        jsonx
+    ]},
+    {mod, {share_bus_server_app, []}}
+]}.

@@ -1,0 +1,8 @@
+/mnt/hgfs/workspace/share/share_bus_server/deps/cowboy
+/mnt/hgfs/workspace/share/share_bus_server/deps/cowlib
+/mnt/hgfs/workspace/share/share_bus_server/deps/ranch
+/mnt/hgfs/workspace/share/share_bus_server/deps/lager
+/mnt/hgfs/workspace/share/share_bus_server/deps/sync
+/mnt/hgfs/workspace/share/share_bus_server/deps/eredis
+/mnt/hgfs/workspace/share/share_bus_server/deps/poolboy
+/mnt/hgfs/workspace/share/share_bus_server/deps/jsonx

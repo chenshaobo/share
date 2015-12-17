@@ -1,0 +1,36 @@
+#!/usr/bin/env escript
+
+-define(ME, filename:basename(escript:script_name())).
+-define(DEV_CONFIG, "config/server.config").
+-define(PRO_CONFIG, "conf/production_server.config").
+-define(TEST_CONFIG, "conf/test_server.config").
+-define(CONFIG_OUTPUT, "src/server_config.erl").
+
+main(["test"]) ->
+	do_generate(?TEST_CONFIG, ?CONFIG_OUTPUT);
+main(["dev"]) ->
+    do_generate(?DEV_CONFIG, ?CONFIG_OUTPUT);
+main(["production"]) ->
+    do_generate(?PRO_CONFIG, ?CONFIG_OUTPUT);
+main(_) ->
+    do_generate(?DEV_CONFIG, ?CONFIG_OUTPUT),
+    halt(0).
+
+do_generate(Input, Output) ->
+    io:format("Begin to generate config erl file\n"),
+    {ok,KeyVals}=file:consult(Input),
+    Src=gen_src(KeyVals),
+    file:write_file(Output,Src,[write,binary,{encoding,utf8}]),
+    io:format("Generate config to erl file ok\n").
+
+gen_src(KeyVals)->
+    {Case,Export,GetFun}= lists:foldl(fun({K,V},{C,E,G})->
+                {lists:concat([C,lists:flatten(io_lib:format("\t~w -> ~w;\n",[K,V]))]),
+                lists:concat([E,lists:flatten(io_lib:format("\n\tget_~w/0,",[K]))]),
+                lists:concat([G,lists:flatten(io_lib:format("get_~w() -> find_by_key(~w).\n\n",[K,K]))])}
+                end,{"","",""},KeyVals),
+    "-module(server_config).\n-export([" ++ Export ++"\t find_by_key/1\n]).\n\nfind_by_key(Key)->\n\tcase Key of\n"++
+     Case ++
+     "\t_-> undefined\n end.\n" ++
+     GetFun  .
+

@@ -1,0 +1,4 @@
+
+
+- Investigate Dialyzer's "no local return" warnings and get rid of them if possible
+  These relates to newly added "documentation only" meta-functions

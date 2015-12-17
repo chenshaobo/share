@@ -40,7 +40,12 @@ myrouterlist() ->
         {'_',[
             {"/p/[...]" , default_post_handler,[
                 {"/p/register",bus_register_handler,false},
-                {"/p/login",   bus_login_handler,false}
+                {"/p/login",   bus_login_handler,false},
+                {"/p/post",    bus_post_handler,true}
+            ]},
+
+            {"/g/[...]", default_get_handler,[
+                {"/g/posts", bus_get_post_handler,true}
             ]}
         ]}
     ].

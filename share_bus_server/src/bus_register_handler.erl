@@ -16,7 +16,6 @@
 
 handle(_Req,Proto)->
     #register_tos{account = Account,password = Password} = Proto,
-    Ret=
     case eredis_pools:hget(?REDIS_POOL,?ACCOUNT,Account)of
         undefined ->
             UserID = eredis_pools:incr(?REDIS_POOL,?NEXT_USER_ID),
@@ -30,5 +29,4 @@ handle(_Req,Proto)->
             #register_toc{ret=1000,user_id=utils:to_int(UserID),session= Session};
         _ ->
             #register_toc{ret=1000,user_id = "already exits"}
-    end,
-    ?ENCODE(Ret).
+    end.

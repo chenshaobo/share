@@ -31,8 +31,20 @@
 -export([hget/3]).
 -export([hmset/3]).
 -export([hmget/3]).
+-export([hincrby/3]).
+-export([hincrby/4]).
+-export([lrange/4]).
 
+hincrby(Pool,Key,Field)->
+    hincrby(Pool,Key,Field,1).
 
+hincrby(Pool,Key,Field,Value)->
+    {ok,R} = q(Pool, ?HINCRBY(Key,Field,Value)),
+    R.
+
+lrange(Pool,UserPostKey,Start,End)->
+    {ok,R} = q(Pool, ?LRANGE(UserPostKey,Start,End)),
+    R.
 
 hmset(Pool,Key,FieldsValues)->
     {ok,R} = q(Pool, ?HMSET(Key,FieldsValues)),

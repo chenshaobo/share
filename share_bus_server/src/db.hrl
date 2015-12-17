@@ -12,6 +12,7 @@
 -define(ACCOUNT,account).
 -define(USERS,users).
 -define(NEXT_USER_ID,next_user_id).
+-define(NEXT_POST_ID,next_post_id).
 
 -type return_value() :: undefined | binary() | [binary() | nonempty_list()].
 
@@ -38,4 +39,10 @@
 -define(HMSET(Key,Values),["HMSET" |[Key | Values]]).
 
 -define(HMGET(Key,Fields), ["HMGET" |[Key|Fields]]).
+
+-define(HINCRBY(Key,Field,Value), ["HINCRBY" ,Key,Field,Value]).
+
+-define(LPUSH(Key,Values), ["LPUSH" | [Key| Values]]).
+
+-define(LRANGE(Key,Start,End),["LRANGE",Key,Start,End]).
 

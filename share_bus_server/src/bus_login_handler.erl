@@ -18,7 +18,6 @@
 handle(_Req, #login_tos{account = Account, password = Password}) ->
     PasswordMD5 = utils:to_md5(Password),
     lager:info("~p",[PasswordMD5]),
-    Ret =
         case eredis_pools:hget(?REDIS_POOL, ?ACCOUNT, Account) of
             undefined ->
                 #login_toc{ret = 1002};
@@ -32,5 +31,4 @@ handle(_Req, #login_tos{account = Account, password = Password}) ->
                         lager:info("~p",[_R]),
                         #login_toc{ret = 1002}
                 end
-        end,
-    ?ENCODE(Ret).
+        end.

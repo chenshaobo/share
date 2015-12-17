@@ -17,6 +17,9 @@
 -export([gen_session/0]).
 -export([to_bin/1]).
 -export([to_md5/1]).
+-export([user_post_key/1]).
+-export([timestamp/0]).
+-export([post_id/1]).
 
 
 incr_userid()->
@@ -44,6 +47,15 @@ to_int(_)->
 user_key(UserID)->
     "user_id:" ++ utils:to_list(UserID).
 
+user_post_key(UserID)->
+    "user_posts:" ++ utils:to_list(UserID).
+
+post_id(PostID)->
+    "post:" ++utils:to_list(PostID).
+
+timestamp()->
+    {A,B,_}=os:timestamp(),
+    A * 1000000 + B.
 
 gen_session()->
     to_md5(io_lib:format("~p",[os:timestamp()])).

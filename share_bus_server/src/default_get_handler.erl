@@ -4,17 +4,19 @@
 %%% @doc
 %%%
 %%% @end
-%%% Created : 17. 十二月 2015 15:54
+%%% Created : 18. 十二月 2015 16:15
 %%%-------------------------------------------------------------------
--module(default_post_handler).
+-module(default_get_handler).
 -author("chenshb@mpreader.com").
+
+
 
 -export([init/2]).
 -export([allowed_methods/2,
-    is_authorized/2,
-    content_types_accepted/2]).
+    is_authorized/2
+    ]).
 
--export([from_json/2]).
+-export([to_html/2]).
 -include("proto.hrl").
 -include("db.hrl").
 
@@ -25,17 +27,16 @@ is_authorized(Req, _State) ->
     {true, Req, _State}.
 
 allowed_methods(Req, State) ->
-    {[<<"POST">>], Req, State}.
+    {[<<"GET">>], Req, State}.
 
 %% process_content_type
-content_types_accepted(Req, State) ->
-    {[{{<<"application">>, <<"json">>, '*'}, from_json}],
-        Req, State}.
+%% content_types_accepted(Req, State) ->
+%%     {[{{'*', '*'}, get}],
+%%         Req, State}.
 
 
-from_json(Req, SubHandlers) ->
+to_html(Req, SubHandlers) ->
     PathBin = cowboy_req:path(Req),
-    lager:info("path info:~p",[PathBin]),
     Ret =
         case lists:keyfind(utils:to_list(PathBin), 1, SubHandlers) of
             {_Path, SubHandler, NeedAuth} ->
@@ -43,17 +44,8 @@ from_json(Req, SubHandlers) ->
             _ ->
                 #default_ret{ret=1000}
         end,
-    Req1 = cowboy_req:set_resp_body(Ret, ?ENCODE(Req)),
-    lager:info("response ~p",[Ret]),
-    {true, Req1, []}.
+    {?ENCODE(Ret),Req,[]}.
 
-do_handle(Req, SubHandler,false) ->
-    case do_parse_body(Req) of
-        {true, Req1, ProtoTos} ->
-            SubHandler:handle(Req1, ProtoTos);
-        error ->
-            #default_ret{ret=1001}
-    end;
 do_handle(Req,SubHandler,true)->
     case do_parse_body(Req) of
         {true, Req1, ProtoTos} ->
@@ -62,11 +54,12 @@ do_handle(Req,SubHandler,true)->
                 true ->
                     SubHandler:handle(Req1, ProtoTos);
                 false ->
-                    #default_ret{ret=1000}
+                    #default_ret{ret=1002}
             end;
         error->
             #default_ret{ret=1001}
     end.
+
 
 do_auth(Req,UserID) ->
     Cookies = cowboy_req:parse_cookies(Req),
@@ -85,12 +78,14 @@ do_auth(Req,UserID) ->
     end.
 
 do_parse_body(Req) ->
-    {ok, Body, Req1} = cowboy_req:body(Req),
-    case ?DECODE( Body) of
+    QS = cowboy_req:parse_qs(Req),
+    Body = ?ENCODE(QS),
+    lager:info("body:~p",[Body]),
+    case ?DECODE(Body) of
         {error, _Reason,_} ->
             lager:error("~p",[_Reason]),
-            {error, Req1, "{\"ret\":404}"};
+            error;
         ProtoTos when is_tuple(ProtoTos)->
             lager:info("proto:~p",[ProtoTos]),
-            {true, Req1, ProtoTos}
+            {true, Req, ProtoTos}
     end.
